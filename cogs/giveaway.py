@@ -27,11 +27,15 @@ class Giveaways(commands.Cog, name="giveaways"):
 
     @commands.command(name="giveaway", aliases=["gstart"], description="!giveaway name_of_the_prize|duration|winners")
     @commands.has_role("Admin")
-    async def giveaway(self, ctx: commands.Context, info: str, winner: discord.Member = None):
+    async def giveaway(self, ctx: commands.Context, info: str, *args):
         answers = info.strip().replace("_", " ").split("|")
+        winners = args
+        if len(args) != answers[2]:
+            await ctx.send(embed=discord.Embed(description="ERROR: Invalid number of winners.", color=0xff0000))
+            return
         try:
-            winners = abs(int(answers[2]))
-            if winners <= 0:
+            winner = abs(int(answers[2]))
+            if winner <= 0:
                 await ctx.send(embed=discord.Embed(description="You did not enter a positive number in winners. Do it like this: !giveaway prize|time|winners"))
                 return
         except ValueError:
@@ -64,14 +68,14 @@ class Giveaways(commands.Cog, name="giveaways"):
         self.hosted_by = ctx.author
         now = int(time.time())
         giveaways = json.load(open("giveaway.json", "r"))
-        if winner:
+        if winners:
             data = {
             "prize": prize,
             "host": ctx.author.id,
             "winners": winners,
             "end_time": now + converted_time[0],
             "channel_id": ctx.guild.get_channel(self.channel).id,
-            "winner": winner.mention,
+            "winner": [winner.mention for winner in winners],
             "message_id": ctx.message.id
             }
         else:
@@ -150,10 +154,13 @@ class Giveaways(commands.Cog, name="giveaways"):
             del giveaways[g_id]
             json.dump(giveaways, open("giveaway.json", "w"), indent=4)
         else:
+            string = ""
+            for i in winner:
+                string += i + ", "
             result_embed = discord.Embed(
                 title="🎉 {} 🎉".format(data["prize"]),
                 color=self.color,
-                description=f"Congratulations **{winner}** , you won the giveaway! Please DM {self.hosted_by.mention} to claim the "
+                description=f"Congratulations **{winner}** you won the giveaway! Please DM {self.hosted_by.mention} to claim the "
                             "prize :)").set_footer(icon_url=self.bot.user.avatar_url, text="Giveaway Ended!")
             await giveaway_message.edit(embed=result_embed)
             ghost_ping = await channel.send(", ".join(winner))
