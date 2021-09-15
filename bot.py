@@ -306,16 +306,12 @@ async def on_member_join(member):
 async def on_member_remove(member):
     channel = bot.get_channel(config['channelids']['leave'])
     current_time = datetime.datetime.now()
-    time = (member.joined_at - current_time).days
-    if time <= 0:
-        time = "a few hours"
-    else:
-        time = f"{time} days"
+    time = (current_time-member.joined_at).days
 
     if channel is None:
         print('No leave channel. Ignoring.')
         return
-    await channel.send(embed=discord.Embed(description=f"{member.mention} left the server after {time}!", color=0xff0000))
+    await channel.send(embed=discord.Embed(description=f"{member.mention} left the server after {time} days!", color=0xff0000))
     custom_invites[member.guild.id] = await member.guild.invites()
     for invite in invite_uses[str(member.guild.id)]:
         if invite[2] == member.name:
